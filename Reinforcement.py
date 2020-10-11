@@ -10,7 +10,7 @@ style.use("ggplot")
 
 SIZE = 10
 
-NUM_EPISODES = 1000
+NUM_EPISODES = 25000
 MOVE_PENALTY = 1  
 ENEMY_PENALTY = 300  
 FOOD_REWARD = 25  
@@ -94,10 +94,10 @@ env[food.x][food.y] = d[FOOD_N]  # sets the food location tile to green color
 env[player.x][player.y] = d[PLAYER_N]  # sets the player tile to blue
 env[enemy.x][enemy.y] = d[ENEMY_N]  # sets the enemy location to red
 img = Image.fromarray(env, 'RGB')
-img = img.resize((500, 500))  
+img = img.resize((200, 200))  
 cv2.imwrite('InitialConfig.png', np.array(img))
 ####
-exit()
+
 player.move()
 player.action(2)
 
