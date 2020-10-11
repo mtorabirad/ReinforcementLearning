@@ -10,13 +10,14 @@ style.use("ggplot")
 
 SIZE = 10
 
-HM_EPISODES = 25000
+NUM_EPISODES = 1000
 MOVE_PENALTY = 1  
 ENEMY_PENALTY = 300  
 FOOD_REWARD = 25  
 epsilon = 0.5  # to inject some randomness
 EPS_DECAY = 0.9999  # Every episode will be epsilon*EPS_DECAY
 SHOW_EVERY = 1000  
+Max_MOVE_IN_EPI = 200
 
 start_q_table = None 
 
@@ -114,7 +115,7 @@ print(q_table[((-9, -2), (3, 9))])
 
 episode_rewards = [] # A list containing the final reward at the end of different episodes.
 
-for episode in range(HM_EPISODES):
+for episode in range(NUM_EPISODES):
     player = Blob()
     food = Blob()
     enemy = Blob()
@@ -130,7 +131,9 @@ for episode in range(HM_EPISODES):
     
     # Start each episode with reward zero
     episode_reward = 0
-    for i in range(200):
+
+    # Start iterations for the current episode
+    for i in range(Max_MOVE_IN_EPI):
         obs = (player-food, player-enemy)
         #print(obs)
         if np.random.random() > epsilon:
@@ -175,6 +178,9 @@ for episode in range(HM_EPISODES):
         q_table[obs][action] = new_q
 
         if show:
+            # blue: player, red: enemy, green: food
+            # If you see blue and red, it means the player got the food.
+            # If you see green and red, it means the player ran into the enemy. 
             env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)  # starts an rbg of our size
             env[food.x][food.y] = d[FOOD_N]  # sets the food location tile to green color
             env[player.x][player.y] = d[PLAYER_N]  # sets the player tile to blue
@@ -193,16 +199,32 @@ for episode in range(HM_EPISODES):
         
         episode_reward += reward
         if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
+            # End the current episode
             break
     episode_rewards.append(episode_reward)
+
+    # Decay the epsilor
     epsilon *= EPS_DECAY
 
+# use numpy convolve command to create a ROLLING moving average
 moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,))/SHOW_EVERY, mode='valid')
+fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[7.5,7.5])
+plt.plot([i for i in range(SHOW_EVERY, SHOW_EVERY+len(moving_avg))], moving_avg, c='b')
+plt.scatter([i for i in range(len(episode_rewards))], episode_rewards, s=2)
+plt.hlines(-MOVE_PENALTY*Max_MOVE_IN_EPI, xmin=0, xmax=NUM_EPISODES, color='k', 
+            label='Made all the moves without hitting the enemy or finding the food', linewidth=4)
+plt.hlines(-MOVE_PENALTY*Max_MOVE_IN_EPI-ENEMY_PENALTY, xmin=0, xmax=NUM_EPISODES, color='r', 
+            label='Made all the moves and hit the enemy at the end!', linewidth=4)
+plt.hlines(FOOD_REWARD, xmin=0, xmax=NUM_EPISODES, color='g', label='Found the food in the first move!', linewidth=4)
 
-plt.plot([i for i in range(len(moving_avg))], moving_avg)
+plt.legend()
 plt.ylabel(f"Reward {SHOW_EVERY}ma")
 plt.xlabel("episode #")
+plt.savefig('Score')
 plt.show()
+print('len(moving_avg) = ', len(moving_avg))
+print('len(episode_rewards) = ', len(episode_rewards))
+
 
 with open(f"qtable-{int(time.time())}.pickle", "wb") as f:
     pickle.dump(q_table, f)
