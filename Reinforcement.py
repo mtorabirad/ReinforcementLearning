@@ -88,7 +88,16 @@ class Blob:
 player = Blob()
 food = Blob()
 enemy = Blob()
-
+#### Save the picture of the initial position
+env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)  # starts an rbg of our size
+env[food.x][food.y] = d[FOOD_N]  # sets the food location tile to green color
+env[player.x][player.y] = d[PLAYER_N]  # sets the player tile to blue
+env[enemy.x][enemy.y] = d[ENEMY_N]  # sets the enemy location to red
+img = Image.fromarray(env, 'RGB')
+img = img.resize((500, 500))  
+cv2.imwrite('InitialConfig.png', np.array(img))
+####
+exit()
 player.move()
 player.action(2)
 
